@@ -78,6 +78,7 @@ func CategoryFlag(name string, value Category, usage string) *Category {
 
 func main() {
 	cat := CategoryFlag("category", All, "Category of videos to check against.\nValid options are all, shorts, video, livestream, membership")
+	dumpToFile := flag.Bool("dump-to-file", false, "The program will dump the missing IDs to a file that can be used with yt-dlp")
 
 	flag.Parse()
 
@@ -204,5 +205,18 @@ func main() {
 	if len(extraIds) != 0 {
 		fmt.Println("Found extra existing videos:")
 		fmt.Println(extraIds)
+	}
+
+	if *dumpToFile {
+		file, fileErr := os.Create("./missing.txt")
+		defer file.Close()
+		if fileErr != nil {
+			fmt.Printf("Error while opening dump file: %v\n", fileErr)
+			return
+		}
+
+		for _, meta := range missingMetadata {
+			file.WriteString(meta.Id + "\n")
+		}
 	}
 }

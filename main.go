@@ -15,7 +15,6 @@ const (
 	Shorts              = "shorts"
 	Video               = "video"
 	Livestream          = "livestream"
-	// TODO: Can't test this until I get my hands on a membership.
 	Membership          = "membership"
 )
 
@@ -149,7 +148,7 @@ func main() {
 				continue
 			}
 		case Membership:
-			if !strings.HasSuffix(metadata.PlaylistTitle, "Membership") {
+			if !strings.HasSuffix(metadata.PlaylistTitle, "Members-only videos") {
 				continue
 			}
 		}

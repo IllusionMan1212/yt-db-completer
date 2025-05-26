@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -73,6 +77,32 @@ func CategoryFlag(name string, value Category, usage string) *Category {
 	c := value
 	flag.Var(&c, name, usage)
 	return &c
+}
+
+func getChannelID(handle string) string {
+	resp, err := http.Get(fmt.Sprintf("https://www.youtube.com/%s", handle))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	re := regexp.MustCompile(`<meta[^>]*property=["']og:url["'][^>]*content=["']([^"']+)["']`)
+
+	results := re.FindAllStringSubmatch(string(body), -1)
+	parsedUrl := results[0][1]
+
+	splits := strings.Split(parsedUrl, "/")
+	channelID := splits[len(splits)-1]
+
+	return channelID
+}
+
+func getMembersPlaylistID(channelID string) string {
+	return fmt.Sprintf("UUMO%s", channelID[2:])
 }
 
 func main() {
@@ -195,7 +225,7 @@ func main() {
 	if len(missingMetadata) == 0 {
 		fmt.Printf("Found %d IDs. No missing IDs. Congrats\n", len(existingIds))
 	} else {
-		fmt.Printf("Found %d IDs. Still missing %d IDs. For a total of %d IDs\n", len(existingIds), len(allMetadata)-(len(existingIds) - len(extraIds)), len(allMetadata))
+		fmt.Printf("Found %d IDs. Still missing %d IDs. For a total of %d IDs\n", len(existingIds), len(allMetadata)-(len(existingIds)-len(extraIds)), len(allMetadata))
 
 		fmt.Println("Missing Videos are:")
 		fmt.Println(missingMetadata)

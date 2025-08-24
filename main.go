@@ -32,7 +32,7 @@ const (
 type Category string
 
 type Metadata struct {
-	Id            string `json:"id"`
+	ID            string `json:"id"`
 	Title         string `json:"title"`
 	Date          string `json:"upload_date"`
 	PlaylistTitle string `json:"playlist_title"`
@@ -46,7 +46,7 @@ type categoryValue struct {
 
 // Below functions are to satisfy the ValueCreator interface
 
-func (s categoryValue) Create(val Category, p *Category, c cli.NoConfig) cli.Value {
+func (c categoryValue) Create(val Category, p *Category, config cli.NoConfig) cli.Value {
 	*p = val
 	cat := Category(*p)
 	return &categoryValue{
@@ -99,9 +99,9 @@ func getChannelID(handle string) string {
 	re := regexp.MustCompile(`<meta[^>]*property=["']og:url["'][^>]*content=["']([^"']+)["']`)
 
 	results := re.FindAllStringSubmatch(string(body), -1)
-	parsedUrl := results[0][1]
+	parsedURL := results[0][1]
 
-	splits := strings.Split(parsedUrl, "/")
+	splits := strings.Split(parsedURL, "/")
 	channelID := splits[len(splits)-1]
 
 	return channelID
@@ -119,20 +119,20 @@ func analyze(jsonPath, dirPath string, category Category, dumpToFile bool) error
 	allMetadata := make([]Metadata, 0, 1024)
 
 	dir, dirErr := os.Open(dirPath)
-	defer dir.Close()
 	if dirErr != nil {
-		return fmt.Errorf("error while opening provided directory: %v\n", dirErr)
+		return fmt.Errorf("error while opening provided directory: %v", dirErr)
 	}
+	defer dir.Close()
 
 	file, fileErr := os.Open(jsonPath)
-	defer file.Close()
 	if fileErr != nil {
-		return fmt.Errorf("error while opening provided json file: %v\n", fileErr)
+		return fmt.Errorf("error while opening provided json file: %v", fileErr)
 	}
+	defer file.Close()
 
 	stat, statErr := dir.Stat()
 	if statErr != nil {
-		return fmt.Errorf("error while stating the provided directory: %v\n", statErr)
+		return fmt.Errorf("error while stating the provided directory: %v", statErr)
 	}
 	if !stat.IsDir() {
 		return fmt.Errorf("second argument is not a directory")
@@ -141,10 +141,10 @@ func analyze(jsonPath, dirPath string, category Category, dumpToFile bool) error
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
-		metadataJson := scanner.Text()
+		metadataJSON := scanner.Text()
 
 		var metadata Metadata
-		json.Unmarshal([]byte(metadataJson), &metadata)
+		json.Unmarshal([]byte(metadataJSON), &metadata)
 
 		switch category {
 		case All: // Do nothing
@@ -175,7 +175,7 @@ func analyze(jsonPath, dirPath string, category Category, dumpToFile bool) error
 
 	entries, dirErr := dir.ReadDir(0)
 	if dirErr != nil {
-		return fmt.Errorf("error while reading directory contents: %v\n", dirErr)
+		return fmt.Errorf("error while reading directory contents: %v", dirErr)
 	}
 
 	for _, entry := range entries {
@@ -197,13 +197,13 @@ func analyze(jsonPath, dirPath string, category Category, dumpToFile bool) error
 	}
 
 	for _, meta := range allMetadata {
-		if !slices.Contains(existingIds, meta.Id) {
+		if !slices.Contains(existingIds, meta.ID) {
 			missingMetadata = append(missingMetadata, meta)
 		}
 	}
 
 	for _, id := range existingIds {
-		if !slices.ContainsFunc(allMetadata, func(meta Metadata) bool { return meta.Id == id }) {
+		if !slices.ContainsFunc(allMetadata, func(meta Metadata) bool { return meta.ID == id }) {
 			extraIds = append(extraIds, id)
 		}
 	}
@@ -229,13 +229,13 @@ func analyze(jsonPath, dirPath string, category Category, dumpToFile bool) error
 
 	if dumpToFile {
 		file, fileErr := os.Create("./missing.txt")
-		defer file.Close()
 		if fileErr != nil {
-			return fmt.Errorf("error while opening dump file: %v\n", fileErr)
+			return fmt.Errorf("error while opening dump file: %v", fileErr)
 		}
+		defer file.Close()
 
 		for _, meta := range missingMetadata {
-			file.WriteString(meta.Id + "\n")
+			file.WriteString(meta.ID + "\n")
 		}
 	}
 
@@ -244,14 +244,14 @@ func analyze(jsonPath, dirPath string, category Category, dumpToFile bool) error
 
 func format(dirPath string, dryRun bool) error {
 	dir, dirErr := os.Open(dirPath)
-	defer dir.Close()
 	if dirErr != nil {
-		return fmt.Errorf("error while opening provided directory: %v\n", dirErr)
+		return fmt.Errorf("error while opening provided directory: %v", dirErr)
 	}
+	defer dir.Close()
 
 	stat, statErr := dir.Stat()
 	if statErr != nil {
-		return fmt.Errorf("error while stating the provided directory: %v\n", statErr)
+		return fmt.Errorf("error while stating the provided directory: %v", statErr)
 	}
 	if !stat.IsDir() {
 		return fmt.Errorf("argument is not a directory")
@@ -259,7 +259,7 @@ func format(dirPath string, dryRun bool) error {
 
 	entries, dirErr := dir.ReadDir(0)
 	if dirErr != nil {
-		return fmt.Errorf("error while reading directory contents: %v\n", dirErr)
+		return fmt.Errorf("error while reading directory contents: %v", dirErr)
 	}
 
 	groupedFiles := make(map[string][]string, 0)
@@ -421,10 +421,10 @@ func main() {
 						return cli.Exit("<username> is required", 1)
 					}
 
-					channelId := getChannelID(username)
-					playlistId := getMembersPlaylistID(channelId)
-					fmt.Printf("Channel ID for %v is: %v\n", username, channelId)
-					fmt.Printf("Membership playlist ID is: %v\n", playlistId)
+					channelID := getChannelID(username)
+					playlistID := getMembersPlaylistID(channelID)
+					fmt.Printf("Channel ID for %v is: %v\n", username, channelID)
+					fmt.Printf("Membership playlist ID is: %v\n", playlistID)
 
 					return nil
 				},
